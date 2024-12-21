@@ -91,16 +91,27 @@ def train_test_split_custom(X, y, test_size=0.2, random_state=None):
     return X_train, X_test, y_train, y_test
 
 # Ana çalışma fonksiyonu
+# Test ve Train Doğruluklarını Görselleştirme
+def compute_accuracies(X_train, y_train, X_test, y_test, all_weights, all_biases):
+    train_predictions = predict_one_vs_all(X_train, all_weights, all_biases)
+    test_predictions = predict_one_vs_all(X_test, all_weights, all_biases)
+
+    train_accuracy = np.mean(train_predictions == y_train) * 100
+    test_accuracy = np.mean(test_predictions == y_test) * 100
+
+    return train_accuracy, test_accuracy
+
+# Ana çalışma fonksiyonu
 def main():
     # Veri yükleme
     df = pd.read_csv("../data/data.csv")  # Kendi dosyanızı ekleyin
-    
+
     # Hedef (y) ve özellikler (X)
     feature_columns = ["Fee", "Model Year", "Kilometer", "Fuel", "Transmission Type", "Accident ",
                        "Security hw", "# of interior equipment ", "# of exterior eq", "Horse Power", "Engine Capacity"]
     X = df[feature_columns].values
     y = df["Model"].values
-    
+
     # Veriyi standardize etme
     mean = np.mean(X, axis=0)
     std = np.std(X, axis=0)
@@ -113,10 +124,10 @@ def main():
     num_classes = len(np.unique(y))
     all_weights, all_biases = one_vs_all(X_train, y_train, num_classes, lr=0.01, epochs=1000)
 
-    # Test setinde tahmin yapma
-    predictions = predict_one_vs_all(X_test, all_weights, all_biases)
-    accuracy = np.mean(predictions == y_test) * 100
-    print(f"Accuracy on test set: {accuracy:.2f}%")
+    # Test ve Train doğruluklarını hesapla
+    train_accuracy, test_accuracy = compute_accuracies(X_train, y_train, X_test, y_test, all_weights, all_biases)
+    print(f"Train Accuracy: {train_accuracy:.2f}%")
+    print(f"Test Accuracy: {test_accuracy:.2f}%")
 
     # Yeni bir girdi
     new_input = np.array([649000, 2022, 78000, 0, 1, 1, 8, 6, 3, 72, 1.2])
