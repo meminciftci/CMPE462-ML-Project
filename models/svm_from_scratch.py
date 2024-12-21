@@ -128,13 +128,6 @@ def main():
         
     print(f"Test Accuracy: {accuracy:.2f}%")
     
-    # Yeni bir girdiyi tahmin etme
-    new_input = np.array([1049000, 2022, 78000, 0, 0, 1, 10, 6, 3, 120, 1.0])  # Örnek yeni araba girdisi
-    new_input = (new_input - mean) / std
-    predicted_class_index = predict_one_vs_all(new_input.reshape(1, -1), weights, biases)
-    predicted_class = unique_classes[predicted_class_index[0]]
-    print(f"Tahmin edilen sınıf: {predicted_class}")
-    
 
 if __name__ == "__main__":
     main()
