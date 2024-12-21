@@ -10,6 +10,7 @@ class LinearSoftMarginSVM:
         """
         SVM'i Quadratic Programming (QP) ile eğitir.
         """
+        solvers.options['show_progress'] = False
         m, n = X.shape
         y = y.astype(np.double).reshape(-1, 1)  # Sınıf etiketlerini sütun vektörü yap
 
@@ -56,7 +57,6 @@ def one_vs_all_svm(X, y, unique_classes, C=1.0):
     biases = []
 
     for cls in unique_classes:
-        print(f"Training for class {cls}...")
         y_binary = np.where(y == cls, 1, -1)
         svm = LinearSoftMarginSVM(C=C)
         svm.fit(X, y_binary)
