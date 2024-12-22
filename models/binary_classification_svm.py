@@ -1,54 +1,43 @@
-# Import necessary libraries
 import pandas as pd
 import numpy as np
-from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
 from sklearn.model_selection import train_test_split
 import time
 
-# Load dataset
 data = pd.read_csv("../data/data.csv")
 
-<<<<<<< HEAD
-# Define features and target
-features = ["Security hw", "Fee"]
-=======
-features = ["Kilometer", "Fee"]      
->>>>>>> 01e0c06ef4385b49c3f5bda9bd8b736bf7ff3d45
+features = ["Kilometer", "Fee"]
 target = "Model"
 X = data[features].values
 y = data[target].values
 
-# Filter binary classes
-binary_mask = (y == 0) | (y == 1)
+binary_mask = (y == 0) | (y == 1)           # iki sınıfı seçin
 X = X[binary_mask]
 y = y[binary_mask]
 
-# Split data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Train Logistic Regression model
-logreg = LogisticRegression()
+svm = SVC(kernel='linear', C=0.1, probability=True)  # C = 0.1
+
 start_train = time.time()
-logreg.fit(X_train, y_train)
+svm.fit(X_train, y_train)
 end_train = time.time()
 training_time = end_train - start_train
 
-# Predict on test set
 start_test = time.time()
-y_pred = logreg.predict(X_test)
-y_pred_proba = logreg.predict_proba(X_test)[:, 1]
+y_pred = svm.predict(X_test)
+y_pred_proba = svm.predict_proba(X_test)[:, 1]  # Probability scores for ROC
 end_test = time.time()
 testing_time = end_test - start_test
 
-# Calculate metrics
 accuracy = accuracy_score(y_test, y_pred)
 precision = precision_score(y_test, y_pred)
 recall = recall_score(y_test, y_pred)
 f1 = f1_score(y_test, y_pred)
 roc_auc = roc_auc_score(y_test, y_pred_proba)
 
-# Store and print results
+# Results
 metrics_results = {
     "Accuracy": accuracy,
     "Precision": precision,
@@ -59,6 +48,8 @@ metrics_results = {
     "Testing Time (s)": testing_time
 }
 
+# Display results
+print("Features:", features)
 print("Accuracy:", accuracy)
 print("Precision:", precision)
 print("Recall:", recall)
