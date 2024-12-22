@@ -4,7 +4,7 @@ import time
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, classification_report, precision_score, recall_score, f1_score
 from sklearn.model_selection import train_test_split
-from logistic_regression import one_vs_all, predict_one_vs_all
+from logistic_regression_from_scratch import one_vs_all, predict_one_vs_all
 from sklearn.metrics import r2_score
 from sklearn.metrics import roc_auc_score
 from sklearn.preprocessing import label_binarize
