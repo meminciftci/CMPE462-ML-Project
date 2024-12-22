@@ -15,7 +15,7 @@ def load_and_preprocess_data(exclude_columns=None):
     all_feature_columns = [
         "Fee", "Model Year", "Kilometer", "Fuel", "Transmission Type",
         "Accident ", "Security hw", "# of interior equipment ",
-        "# of exterior eq", "Horse Power", "Engine Capacity"
+        "# of exterior eq"
     ]
 
     # Exclude specified columns if provided
