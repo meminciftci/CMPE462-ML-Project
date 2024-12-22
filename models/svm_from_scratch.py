@@ -7,34 +7,32 @@ class LinearSoftMarginSVM:
         self.C = C  # Regularization parameter
 
     def fit(self, X, y):
-        """
-        SVM'i Quadratic Programming (QP) ile eğitir.
-        """
+        """Train the SVM using Quadratic Programming."""
         solvers.options['show_progress'] = False
         m, n = X.shape
-        y = y.astype(np.double).reshape(-1, 1)  # Sınıf etiketlerini sütun vektörü yap
+        y = y.astype(np.double).reshape(-1, 1)
 
-        # QP için matrisler
+        # Matrices for QP
         K = np.dot(X, X.T) * (y @ y.T)
         P = matrix(K)
         q = matrix(-np.ones((m, 1)))
 
-        G_std = np.diag(-np.ones(m))  # α_i >= 0 için
-        G_slack = np.eye(m)           # α_i <= C için
+        G_std = np.diag(-np.ones(m))  # For α_i >= 0
+        G_slack = np.eye(m)           # For α_i <= C
         G = matrix(np.vstack((G_std, G_slack)))
 
-        h_std = np.zeros(m)           # α_i >= 0 için
-        h_slack = np.ones(m) * self.C # α_i <= C için
+        h_std = np.zeros(m)
+        h_slack = np.ones(m) * self.C
         h = matrix(np.hstack((h_std, h_slack)))
 
         A = matrix(y.T)
         b = matrix(0.0)
 
-        # QP çözümü
+        # Solve QP
         solution = solvers.qp(P, q, G, h, A, b)
         alphas = np.ravel(solution['x'])
 
-        # Destek vektörleri
+        # Support vectors
         sv = alphas > 1e-5
         self.alphas = alphas[sv]
         self.support_vectors = X[sv]
@@ -44,15 +42,11 @@ class LinearSoftMarginSVM:
         self.b = np.mean(self.support_vector_labels - np.dot(self.support_vectors, self.w))
 
     def predict(self, X):
-        """
-        Yeni veri noktalarının sınıflarını tahmin eder.
-        """
+        """Predict class labels for given data."""
         return np.sign(np.dot(X, self.w) + self.b)
 
 def one_vs_all_svm(X, y, unique_classes, C=1.0):
-    """
-    Multi-Class SVM'i One-vs-All yöntemi ile uygular.
-    """
+    """Train multi-class SVM using One-vs-All approach."""
     weights = []
     biases = []
 
@@ -66,68 +60,59 @@ def one_vs_all_svm(X, y, unique_classes, C=1.0):
     return np.array(weights), np.array(biases)
 
 def predict_one_vs_all(X, weights, biases):
-    """
-    Multi-class tahmin yapar.
-    """
+    """Predict multi-class labels."""
     scores = np.dot(X, weights.T) + biases
     return np.argmax(scores, axis=1)
 
 def train_test_split_custom(X, y, test_size=0.2, random_state=None):
-    """
-    Eğitim ve test setini rastgele şekilde ayırır.
-    """
+    """Custom train-test split function."""
     if random_state is not None:
-        np.random.seed(random_state)  # Rastgeleliği sabitlemek için
+        np.random.seed(random_state)
 
-    # Verilerin sırasını karıştır
     indices = np.arange(X.shape[0])
     np.random.shuffle(indices)
 
-    # Karışık veriyi kullanarak X ve y'yi yeniden sıralama
     X = X[indices]
     y = y[indices]
 
-    # Eğitim ve test seti için sınır belirleme
     split_index = int((1 - test_size) * len(X))
-
     X_train, X_test = X[:split_index], X[split_index:]
     y_train, y_test = y[:split_index], y[split_index:]
 
     return X_train, X_test, y_train, y_test
 
-
 def main():
-    # Veri yükleme
-    df = pd.read_csv("../data/data.csv")  # Kendi dosyanızı ekleyin
+    # Load data
+    df = pd.read_csv("../data/data.csv")
 
-    # Özellik sütunları ve hedef sütun
+    # Define features and target
     feature_columns = ["Fee", "Model Year", "Kilometer", "Fuel", "Transmission Type", "Accident ",
-                       "Security hw", "# of interior equipment ", "# of exterior eq", "Horse Power", "Engine Capacity"]
+                       "Security hw", "# of interior equipment ", "# of exterior eq"]
     target_column = "Model" 
 
     X = df[feature_columns].values
     y = df[target_column].values
 
-    # Benzersiz sınıfları al
-    unique_classes = np.unique(y)
-
-    # Veriyi normalize etme
+    # Normalize data
     mean = np.mean(X, axis=0)
     std = np.std(X, axis=0)
     X = (X - mean) / std
 
-    # Eğitim ve test setine ayırma
-    X_train, X_test, y_train, y_test = train_test_split_custom(X, y, test_size=0.2, random_state=42)
+    # Split into train and test sets
+    X_train, X_test, y_train, y_test = train_test_split_custom(X, y, test_size=0.2, random_state=27)
 
-    # Multi-Class SVM eğitimi
-    weights, biases = one_vs_all_svm(X_train, y_train, unique_classes)
+    # Train multi-class SVM
+    weights, biases = one_vs_all_svm(X_train, y_train, unique_classes=np.unique(y))
 
-    # Test setinde tahmin yapma
+    # Evaluate on test set
     predictions = predict_one_vs_all(X_test, weights, biases)
-    accuracy = np.mean(predictions == [np.where(unique_classes == c)[0][0] for c in y_test]) * 100
-        
-    print(f"Test Accuracy: {accuracy:.2f}%")
-    
+    test_accuracy = np.mean(predictions == [np.where(np.unique(y) == c)[0][0] for c in y_test]) * 100
+    print(f"Test Accuracy: {test_accuracy:.2f}%")
+
+    # Evaluate on train set
+    predictions = predict_one_vs_all(X_train, weights, biases)
+    train_accuracy = np.mean(predictions == [np.where(np.unique(y) == c)[0][0] for c in y_train]) * 100
+    print(f"Train Accuracy: {train_accuracy:.2f}%")
 
 if __name__ == "__main__":
     main()

@@ -1,17 +1,17 @@
 import numpy as np
 import pandas as pd
 
-# Sigmoid fonksiyonu
+# Sigmoid function
 def sigmoid(z):
     return 1 / (1 + np.exp(-z))
 
-# Cross-entropy loss fonksiyonu
+# Cross-entropy loss function
 def compute_loss(y_true, y_pred):
     m = len(y_true)
     loss = -np.sum(y_true * np.log(y_pred + 1e-9) + (1 - y_true) * np.log(1 - y_pred + 1e-9)) / m
     return loss
 
-# Logistic Regression eğitim fonksiyonu (binary için)
+# Logistic Regression training function (binary)
 def logistic_regression_train(X, y, lr=0.01, epochs=1000):
     m, n = X.shape
     weights = np.zeros(n)
@@ -33,7 +33,7 @@ def logistic_regression_train(X, y, lr=0.01, epochs=1000):
             
     return weights, bias
 
-# One-vs-All yaklaşımıyla multi-class Logistic Regression
+# One-vs-All approach for multi-class Logistic Regression
 def one_vs_all(X, y, num_classes, lr=0.01, epochs=1000):
     m, n = X.shape
     all_weights = np.zeros((num_classes, n))
@@ -41,39 +41,33 @@ def one_vs_all(X, y, num_classes, lr=0.01, epochs=1000):
     
     for c in range(num_classes):
         print(f"Training for class {c}...")
-        y_binary = (y == c).astype(int)  # Current class vs others
+        y_binary = (y == c).astype(int)
         weights, bias = logistic_regression_train(X, y_binary, lr, epochs)
         all_weights[c] = weights
         all_biases[c] = bias
     
     return all_weights, all_biases
 
-# Tahmin fonksiyonu
+# Prediction function
 def predict_one_vs_all(X, all_weights, all_biases):
     probabilities = sigmoid(np.dot(X, all_weights.T) + all_biases)
     return np.argmax(probabilities, axis=1)
 
-# Yeni girdiyi tamamlayıcı fonksiyon
+# Complete missing values for a new input
 def complete_new_input(new_input, feature_columns):
     input_dict = dict(zip(feature_columns[:len(new_input)], new_input))
     complete_input = [input_dict.get(col, 0) for col in feature_columns]
     return np.array(complete_input)
 
-# Tahmin fonksiyonu
+# Predict new input
 def predict_new_input(new_input, all_weights, all_biases, mean, std, feature_columns):
-    # 1. Yeni girdiyi sütun sırasına göre tamamla
     new_input = complete_new_input(new_input, feature_columns)
-    
-    # 2. Yeni girdiyi normalize et
     new_input = (new_input - mean) / std
-    
-    # 3. Tahmin et
     probabilities = sigmoid(np.dot(new_input, all_weights.T) + all_biases)
     predicted_class = np.argmax(probabilities)
-    
     return predicted_class, probabilities
 
-# Eğitim ve test setini ayırma fonksiyonu
+# Custom train-test split function
 def train_test_split_custom(X, y, test_size=0.2, random_state=None):
     if random_state is not None:
         np.random.seed(random_state)
@@ -90,8 +84,7 @@ def train_test_split_custom(X, y, test_size=0.2, random_state=None):
 
     return X_train, X_test, y_train, y_test
 
-# Ana çalışma fonksiyonu
-# Test ve Train Doğruluklarını Görselleştirme
+# Calculate train and test accuracies
 def compute_accuracies(X_train, y_train, X_test, y_test, all_weights, all_biases):
     train_predictions = predict_one_vs_all(X_train, all_weights, all_biases)
     test_predictions = predict_one_vs_all(X_test, all_weights, all_biases)
@@ -101,41 +94,27 @@ def compute_accuracies(X_train, y_train, X_test, y_test, all_weights, all_biases
 
     return train_accuracy, test_accuracy
 
-# Ana çalışma fonksiyonu
+# Main function
 def main():
-    # Veri yükleme
-    df = pd.read_csv("../data/data.csv")  # Kendi dosyanızı ekleyin
+    df = pd.read_csv("../data/data.csv")
 
-    # Hedef (y) ve özellikler (X)
     feature_columns = ["Fee", "Model Year", "Kilometer", "Fuel", "Transmission Type", "Accident ",
-                       "Security hw", "# of interior equipment ", "# of exterior eq", "Horse Power", "Engine Capacity"]
+                       "Security hw", "# of interior equipment ", "# of exterior eq"]
     X = df[feature_columns].values
     y = df["Model"].values
 
-    # Veriyi standardize etme
     mean = np.mean(X, axis=0)
     std = np.std(X, axis=0)
-    X = (X - mean) / std  # Normalize
+    X = (X - mean) / std
 
-    # Eğitim ve test setine ayırma
-    X_train, X_test, y_train, y_test = train_test_split_custom(X, y, test_size=0.2, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split_custom(X, y, test_size=0.2, random_state=None)
 
-    # Multi-class Logistic Regression eğitimi
     num_classes = len(np.unique(y))
     all_weights, all_biases = one_vs_all(X_train, y_train, num_classes, lr=0.01, epochs=1000)
 
-    # Test ve Train doğruluklarını hesapla
     train_accuracy, test_accuracy = compute_accuracies(X_train, y_train, X_test, y_test, all_weights, all_biases)
     print(f"Train Accuracy: {train_accuracy:.2f}%")
     print(f"Test Accuracy: {test_accuracy:.2f}%")
-
-    # Yeni bir girdi
-    new_input = np.array([649000, 2022, 78000, 0, 1, 1, 8, 6, 3, 72, 1.2])
-    
-    # Tahmini al
-    predicted_class, probabilities = predict_new_input(new_input, all_weights, all_biases, mean, std, feature_columns)
-    print(f"Tahmin edilen sınıf: {predicted_class}")
-    print(f"Olasılıklar: {probabilities}")
 
 if __name__ == "__main__":
     main()
