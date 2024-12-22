@@ -9,12 +9,8 @@ import time
 # Load dataset
 data = pd.read_csv("../data/data.csv")
 
-<<<<<<< HEAD
-# Define features and target
-features = ["Security hw", "Fee"]
-=======
+
 features = ["Kilometer", "Fee"]      
->>>>>>> 01e0c06ef4385b49c3f5bda9bd8b736bf7ff3d45
 target = "Model"
 X = data[features].values
 y = data[target].values

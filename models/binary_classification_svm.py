@@ -12,7 +12,7 @@ target = "Model"
 X = data[features].values
 y = data[target].values
 
-binary_mask = (y == 0) | (y == 1)           # iki sınıfı seçin
+binary_mask = (y == 0) | (y == 1)        
 X = X[binary_mask]
 y = y[binary_mask]
 
