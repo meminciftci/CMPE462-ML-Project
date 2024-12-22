@@ -67,14 +67,12 @@ r2 = r2_score(y_test, y_test_pred)
 print(f"R^2 Score: {r2}")
 
 def calculate_auroc(y_true, y_pred_proba):
-    # Çok sınıflı AUROC için one-vs-rest yaklaşımı
     y_bin = label_binarize(y_true, classes=np.unique(y_true))
     return roc_auc_score(y_bin, y_pred_proba, multi_class='ovr')
 
 y_train_pred_proba = final_model.predict_proba(X_train)
 y_test_pred_proba = final_model.predict_proba(X_test)
 
-# AUROC için probabiliteyi kullanıyoruz. Bu yüzden burada bir değişiklik yapmamıza gerek yok.
 train_auroc = calculate_auroc(y_train, y_train_pred_proba)
 test_auroc = calculate_auroc(y_test, y_test_pred_proba)
 
