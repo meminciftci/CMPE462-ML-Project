@@ -2,8 +2,9 @@ import numpy as np
 import pandas as pd
 import time
 from sklearn.svm import SVC
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, classification_report
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import label_binarize
 from svm_from_scratch import one_vs_all_svm, predict_one_vs_all
 
 def load_and_preprocess_data(exclude_columns=None):
@@ -52,13 +53,17 @@ def measure_prediction_time(model, X_test):
     prediction_time = time.time() - start_time
     return predictions, prediction_time
 
-def evaluate_model(y_true, y_pred):
+def evaluate_model(y_true, y_pred, y_prob=None):
     """Calculate evaluation metrics for a model."""
     accuracy = accuracy_score(y_true, y_pred) * 100
     precision = precision_score(y_true, y_pred, average="weighted") * 100
     recall = recall_score(y_true, y_pred, average="weighted") * 100
     f1 = f1_score(y_true, y_pred, average="weighted") * 100
-    return accuracy, precision, recall, f1
+    auroc = None
+    if y_prob is not None:
+        y_true_binarized = label_binarize(y_true, classes=np.unique(y_true))
+        auroc = roc_auc_score(y_true_binarized, y_prob, average="weighted", multi_class="ovr") * 100
+    return accuracy, precision, recall, f1, auroc
 
 def compare_models(X_train, X_test, y_train, y_test):
     """Compare models in terms of runtime and performance metrics."""
@@ -71,14 +76,10 @@ def compare_models(X_train, X_test, y_train, y_test):
     weights, biases = one_vs_all_svm(X_train, y_train, unique_classes, C=1.0)
     training_time = time.time() - start_time
     y_pred, prediction_time = measure_prediction_time({"weights": weights, "biases": biases}, X_test)
-    accuracy, precision, recall, f1 = evaluate_model(y_test, y_pred)
+    accuracy, precision, recall, f1, auroc = evaluate_model(y_test, y_pred)
 
     results.append({
         "model": "Linear Soft-Margin SVM",
-        "accuracy": accuracy,
-        "precision": precision,
-        "recall": recall,
-        "f1_score": f1,
         "training_time": training_time,
         "prediction_time": prediction_time
     })
@@ -86,18 +87,15 @@ def compare_models(X_train, X_test, y_train, y_test):
     # Scikit-learn Linear Kernel SVM
     print("Evaluating Scikit-learn Linear Kernel SVM...")
     start_time = time.time()
-    model = SVC(kernel="linear", random_state=42, C=1.0)
+    model = SVC(kernel="linear", random_state=42, C=1.0, probability=True)
     model.fit(X_train, y_train)
     training_time = time.time() - start_time
     y_pred, prediction_time = measure_prediction_time(model, X_test)
-    accuracy, precision, recall, f1 = evaluate_model(y_test, y_pred)
+    y_prob = model.predict_proba(X_test)
+    accuracy, precision, recall, f1, auroc = evaluate_model(y_test, y_pred, y_prob)
 
     results.append({
         "model": "Scikit-learn Linear SVM",
-        "accuracy": accuracy,
-        "precision": precision,
-        "recall": recall,
-        "f1_score": f1,
         "training_time": training_time,
         "prediction_time": prediction_time
     })
@@ -105,18 +103,15 @@ def compare_models(X_train, X_test, y_train, y_test):
     # Scikit-learn Polynomial Kernel SVM
     print("Evaluating Scikit-learn Polynomial Kernel SVM...")
     start_time = time.time()
-    model = SVC(kernel="poly", degree=3, random_state=42, C=1.0)
+    model = SVC(kernel="poly", degree=3, random_state=42, C=1.0, probability=True)
     model.fit(X_train, y_train)
     training_time = time.time() - start_time
     y_pred, prediction_time = measure_prediction_time(model, X_test)
-    accuracy, precision, recall, f1 = evaluate_model(y_test, y_pred)
+    y_prob = model.predict_proba(X_test)
+    accuracy, precision, recall, f1, auroc = evaluate_model(y_test, y_pred, y_prob)
 
     results.append({
         "model": "Scikit-learn Polynomial SVM",
-        "accuracy": accuracy,
-        "precision": precision,
-        "recall": recall,
-        "f1_score": f1,
         "training_time": training_time,
         "prediction_time": prediction_time
     })
@@ -124,18 +119,15 @@ def compare_models(X_train, X_test, y_train, y_test):
     # Scikit-learn RBF Kernel SVM
     print("Evaluating Scikit-learn RBF Kernel SVM...")
     start_time = time.time()
-    model = SVC(kernel="rbf", random_state=42, C=1.0)
+    model = SVC(kernel="rbf", random_state=42, C=1.0, probability=True)
     model.fit(X_train, y_train)
     training_time = time.time() - start_time
     y_pred, prediction_time = measure_prediction_time(model, X_test)
-    accuracy, precision, recall, f1 = evaluate_model(y_test, y_pred)
+    y_prob = model.predict_proba(X_test)
+    accuracy, precision, recall, f1, auroc = evaluate_model(y_test, y_pred, y_prob)
 
     results.append({
         "model": "Scikit-learn RBF SVM",
-        "accuracy": accuracy,
-        "precision": precision,
-        "recall": recall,
-        "f1_score": f1,
         "training_time": training_time,
         "prediction_time": prediction_time
     })
