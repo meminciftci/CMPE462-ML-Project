@@ -24,3 +24,7 @@ Welcome to the Machine Learning Project of Süleyman, Hüseyin, and Muhammet. Th
 
 * Relevant output will be shown on the terminal.
 
+* There are also two more Jupyter files that can be run using the UI Jupyter provides. These two files are:  
+``knn.ipynb``  
+``xgboost.ipynb``
+
